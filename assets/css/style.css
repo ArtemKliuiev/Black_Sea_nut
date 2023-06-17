@@ -1,5 +1,7 @@
+html {
+    scroll-behavior: smooth;
+}
+
 body {
-    background-color: black;
-    font-size: 21px;
-    color: white;
+    color: #1A2F3F;
 }
