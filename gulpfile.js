@@ -1,6 +1,6 @@
 "use strict";
 
-const {src, dest} = require("gulp");
+const { src, dest, series, parallel, watch } = require("gulp");
 const gulp = require("gulp");
 const autoprefixer = require("gulp-autoprefixer");
 const cssbeautify = require("gulp-cssbeautify");
@@ -17,124 +17,117 @@ const webpack = require('webpack');
 const webpackStream = require('webpack-stream');
 const browserSync = require("browser-sync").create();
 
-
 /* Paths */
 const srcPath = 'src/';
 const distPath = 'dist/';
 
 const path = {
-    build: {
-        html:   distPath,
-        js:     distPath + "assets/js/",
-        css:    distPath + "assets/css/",
-        images: distPath + "assets/images/",
-        fonts:  distPath + "assets/fonts/"
-    },
-    src: {
-        html:   srcPath + "*.html",
-        js:     srcPath + "assets/js/*.js",
-        css:    srcPath + "assets/scss/*.scss",
-        images: srcPath + "assets/images/**/*.{jpg,png,svg,gif,ico,webp,webmanifest,xml,json}",
-        fonts:  srcPath + "assets/fonts/**/*.{eot,woff,woff2,ttf,svg}"
-    },
-    watch: {
-        html:   srcPath + "**/*.html",
-        js:     srcPath + "assets/js/**/*.js",
-        css:    srcPath + "assets/scss/**/*.scss",
-        images: srcPath + "assets/images/**/*.{jpg,png,svg,gif,ico,webp,webmanifest,xml,json}",
-        fonts:  srcPath + "assets/fonts/**/*.{eot,woff,woff2,ttf,svg}"
-    },
-    clean: "./" + distPath
-}
-
-
+  build: {
+    html: 'dist/',
+    js: 'dist/assets/js/',
+    css: 'dist/assets/css/',
+    images: 'dist/assets/images/',
+    fonts: 'dist/assets/fonts/'
+  },
+  src: {
+    html: ['src/*.html', 'src/pages/**/*.html'],
+    js: 'src/assets/js/*.js',
+    css: 'src/assets/scss/**/*.scss',
+    images: 'src/assets/images/**/*.{jpg,png,svg,gif,ico,webp,webmanifest,xml,json}',
+    fonts: 'src/assets/fonts/**/*'
+  },
+  watch: {
+    html: 'src/**/*.html',
+    js: 'src/assets/js/**/*.js',
+    css: 'src/assets/scss/**/*.scss',
+    images: 'src/assets/images/**/*.{jpg,png,svg,gif,ico,webp,webmanifest,xml,json}',
+    fonts: 'src/assets/fonts/**/*'
+  },
+  clean: './dist/'
+};
 
 /* Tasks */
 
 function serve() {
-    browserSync.init({
-        server: {
-            baseDir: "./" + distPath
-        }
-    });
+  browserSync.init({
+    server: {
+      baseDir: "./" + distPath
+    }
+  });
 }
 
-function html(cb) {
-    panini.refresh();
-    return src(path.src.html, {base: srcPath})
-        .pipe(plumber())
-        .pipe(panini({
-            root:       srcPath,
-            layouts:    srcPath + 'layouts/',
-            partials:   srcPath + 'partials/',
-            helpers:    srcPath + 'helpers/',
-            data:       srcPath + 'data/'
-        }))
-        .pipe(dest(path.build.html))
-        .pipe(browserSync.reload({stream: true}));
-
-    cb();
+function html() {
+  panini.refresh();
+  return src(path.src.html, { base: srcPath })
+    .pipe(plumber())
+    .pipe(panini({
+      root: srcPath,
+      layouts: srcPath + 'layouts/',
+      partials: srcPath + 'partials/',
+      helpers: srcPath + 'helpers/',
+      data: srcPath + 'data/'
+    }))
+    .pipe(dest(path.build.html))
+    .pipe(browserSync.reload({ stream: true }));
 }
 
-function css(cb) {
-    return src(path.src.css, {base: srcPath + "assets/scss/"})
-        .pipe(plumber({
-            errorHandler : function(err) {
-                notify.onError({
-                    title:    "SCSS Error",
-                    message:  "Error: <%= error.message %>"
-                })(err);
-                this.emit('end');
-            }
-        }))
-        .pipe(sass({
-            includePaths: './node_modules/'
-        }))
-        .pipe(autoprefixer({
-            cascade: true
-        }))
-        .pipe(cssbeautify())
-        .pipe(dest(path.build.css))
-        .pipe(cssnano({
-            zindex: false,
-            discardComments: {
-                removeAll: true
-            }
-        }))
-        .pipe(removeComments())
-        .pipe(rename({
-            suffix: ".min",
-            extname: ".css"
-        }))
-        .pipe(dest(path.build.css))
-        .pipe(browserSync.reload({stream: true}));
-
-    cb();
+function css() {
+  return src(path.src.css, { base: srcPath + "assets/scss/" })
+    .pipe(plumber({
+      errorHandler: function (err) {
+        notify.onError({
+          title: "SCSS Error",
+          message: "Error: <%= error.message %>"
+        })(err);
+        this.emit('end');
+      }
+    }))
+    .pipe(sass({
+      includePaths: './node_modules/'
+    }))
+    .pipe(autoprefixer({
+      cascade: true
+    }))
+    .pipe(cssbeautify())
+    .pipe(dest(path.build.css))
+    .pipe(cssnano({
+      zindex: false,
+      discardComments: {
+        removeAll: true
+      }
+    }))
+    .pipe(removeComments())
+    .pipe(rename({
+      suffix: ".min",
+      extname: ".css"
+    }))
+    .pipe(dest(path.build.css))
+    .pipe(browserSync.reload({ stream: true }));
 }
 
-function cssWatch(cb) {
-    return src(path.src.css, {base: srcPath + "assets/scss/"})
-        .pipe(plumber({
-            errorHandler : function(err) {
-                notify.onError({
-                    title:    "SCSS Error",
-                    message:  "Error: <%= error.message %>"
-                })(err);
-                this.emit('end');
-            }
-        }))
-        .pipe(sass({
-            includePaths: './node_modules/'
-        }))
-        .pipe(rename({
-            suffix: ".min",
-            extname: ".css"
-        }))
-        .pipe(dest(path.build.css))
-        .pipe(browserSync.reload({stream: true}));
-
-    cb();
+function cssWatch() {
+  return src(path.src.css, { base: srcPath + "assets/scss/" })
+    .pipe(plumber({
+      errorHandler: function (err) {
+        notify.onError({
+          title: "SCSS Error",
+          message: "Error: <%= error.message %>"
+        })(err);
+        this.emit('end');
+      }
+    }))
+    .pipe(sass({
+      includePaths: './node_modules/'
+    }))
+    .pipe(rename({
+      suffix: ".min",
+      extname: ".css"
+    }))
+    .pipe(dest(path.build.css))
+    .pipe(browserSync.reload({ stream: true }))
+    .on("end", browserSync.reload);
 }
+
 
 function js() {
   return src(path.src.js, { base: srcPath + 'assets/js/' })
@@ -143,43 +136,35 @@ function js() {
 }
 
 function jsWatch() {
-  watch(path.src.js, series(js));
+  return watch(path.src.js, series(js));
 }
 
-function images(cb) {
-    return src(path.src.images)
-        .pipe(dest(path.build.images))
-        .pipe(browserSync.reload({stream: true}));
-
-    cb();
+function images() {
+  return src(path.src.images)
+    .pipe(dest(path.build.images))
+    .pipe(browserSync.reload({ stream: true }));
 }
 
-function fonts(cb) {
-    return src(path.src.fonts)
-        .pipe(dest(path.build.fonts))
-        .pipe(browserSync.reload({stream: true}));
-
-    cb();
+function fonts() {
+  return src(path.src.fonts)
+    .pipe(dest(path.build.fonts))
+    .pipe(browserSync.reload({ stream: true }));
 }
 
-function clean(cb) {
-    return del(path.clean);
-
-    cb();
+function clean() {
+  return del(path.clean);
 }
 
 function watchFiles() {
-    gulp.watch([path.watch.html], html);
-    gulp.watch([path.watch.css], cssWatch);
-    gulp.watch([path.watch.js], js);
-    gulp.watch([path.watch.images], images);
-    gulp.watch([path.watch.fonts], fonts);
+  watch([path.watch.html], html);
+  watch([path.watch.css], cssWatch);
+  watch([path.watch.js], js);
+  watch([path.watch.images], images);
+  watch([path.watch.fonts], fonts);
 }
 
-const build = gulp.series(clean, gulp.parallel(html, css, js, images, fonts));
-const watch = gulp.parallel(build, watchFiles, serve);
-
-
+const build = series(clean, parallel(html, css, js, images, fonts));
+const dev = parallel(build, watchFiles, serve);
 
 /* Exports Tasks */
 exports.html = html;
@@ -189,5 +174,5 @@ exports.images = images;
 exports.fonts = fonts;
 exports.clean = clean;
 exports.build = build;
-exports.watch = watch;
-exports.default = watch;
+exports.default = dev;
+

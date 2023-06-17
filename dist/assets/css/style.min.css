@@ -1,1 +1,7 @@
-body{background-color:#000;font-size:21px;color:#fff}
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  color: #1A2F3F;
+}
